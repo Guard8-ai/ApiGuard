@@ -235,7 +235,10 @@ fn extract_definitions(spec: &SwaggerSpec) -> Vec<Schema> {
                 .take(MAX_SCHEMA_PROPERTIES)
                 .map(|(prop_name, prop)| SchemaProperty {
                     name: prop_name.clone(),
-                    type_name: prop.prop_type.clone().unwrap_or_else(|| "string".to_string()),
+                    type_name: prop
+                        .prop_type
+                        .clone()
+                        .unwrap_or_else(|| "string".to_string()),
                     description: prop.description.clone().unwrap_or_default(),
                     required: def.required.contains(prop_name),
                 })
@@ -317,7 +320,10 @@ mod tests {
         let spec = parser.parse(PETSTORE_SWAGGER2).unwrap();
         assert_eq!(spec.name, "Petstore");
         assert_eq!(spec.version, Some("1.0.0".to_string()));
-        assert_eq!(spec.base_url, Some("https://petstore.example.com/v1".to_string()));
+        assert_eq!(
+            spec.base_url,
+            Some("https://petstore.example.com/v1".to_string())
+        );
     }
 
     #[test]
@@ -333,7 +339,10 @@ mod tests {
     fn parses_swagger2_auth() {
         let parser = Swagger2Parser;
         let spec = parser.parse(PETSTORE_SWAGGER2).unwrap();
-        assert!(spec.auth_methods.iter().any(|a| matches!(a, AuthMethod::ApiKey { .. })));
+        assert!(spec
+            .auth_methods
+            .iter()
+            .any(|a| matches!(a, AuthMethod::ApiKey { .. })));
     }
 
     #[test]

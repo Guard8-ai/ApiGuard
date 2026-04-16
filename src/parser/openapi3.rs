@@ -1,6 +1,6 @@
 use crate::ir::{
-    ApiSpec, AuthMethod, Endpoint, HttpMethod, Parameter, ParameterLocation, RequestBody,
-    Response, Schema, SchemaProperty, SpecFormat,
+    ApiSpec, AuthMethod, Endpoint, HttpMethod, Parameter, ParameterLocation, RequestBody, Response,
+    Schema, SchemaProperty, SpecFormat,
 };
 use crate::parser::ApiParser;
 use crate::security::{MAX_ENDPOINTS, MAX_SCHEMA_PROPERTIES};
@@ -18,7 +18,8 @@ impl ApiParser for OpenApi3Parser {
     }
 
     fn detect(&self, content: &str) -> bool {
-        content.contains("openapi") && (content.contains("\"3.") || content.contains("'3.") || content.contains("3."))
+        content.contains("openapi")
+            && (content.contains("\"3.") || content.contains("'3.") || content.contains("3."))
     }
 
     fn parse(&self, content: &str) -> Result<ApiSpec> {
@@ -58,9 +59,7 @@ fn extract_auth_methods(spec: &openapiv3::OpenAPI) -> Vec<AuthMethod> {
         for (_, scheme_ref) in &components.security_schemes {
             if let openapiv3::ReferenceOr::Item(scheme) = scheme_ref {
                 match scheme {
-                    openapiv3::SecurityScheme::APIKey {
-                        location, name, ..
-                    } => {
+                    openapiv3::SecurityScheme::APIKey { location, name, .. } => {
                         let loc = match location {
                             openapiv3::APIKeyLocation::Query => "query",
                             openapiv3::APIKeyLocation::Header => "header",
@@ -172,18 +171,26 @@ fn extract_parameters(params: &[openapiv3::ReferenceOr<openapiv3::Parameter>]) -
         };
 
         let (name, location, data) = match param {
-            openapiv3::Parameter::Query { parameter_data, .. } => {
-                (parameter_data.name.clone(), ParameterLocation::Query, parameter_data)
-            }
-            openapiv3::Parameter::Header { parameter_data, .. } => {
-                (parameter_data.name.clone(), ParameterLocation::Header, parameter_data)
-            }
-            openapiv3::Parameter::Path { parameter_data, .. } => {
-                (parameter_data.name.clone(), ParameterLocation::Path, parameter_data)
-            }
-            openapiv3::Parameter::Cookie { parameter_data, .. } => {
-                (parameter_data.name.clone(), ParameterLocation::Cookie, parameter_data)
-            }
+            openapiv3::Parameter::Query { parameter_data, .. } => (
+                parameter_data.name.clone(),
+                ParameterLocation::Query,
+                parameter_data,
+            ),
+            openapiv3::Parameter::Header { parameter_data, .. } => (
+                parameter_data.name.clone(),
+                ParameterLocation::Header,
+                parameter_data,
+            ),
+            openapiv3::Parameter::Path { parameter_data, .. } => (
+                parameter_data.name.clone(),
+                ParameterLocation::Path,
+                parameter_data,
+            ),
+            openapiv3::Parameter::Cookie { parameter_data, .. } => (
+                parameter_data.name.clone(),
+                ParameterLocation::Cookie,
+                parameter_data,
+            ),
         };
 
         let schema_type = extract_schema_type_from_parameter_data(data);
@@ -214,23 +221,19 @@ fn extract_schema_type_from_parameter_data(data: &openapiv3::ParameterData) -> S
 }
 
 fn convert_request_body(body: &openapiv3::RequestBody) -> RequestBody {
-    let (content_type, schema) = body
-        .content
-        .iter()
-        .next()
-        .map_or_else(
-            || ("application/json".to_string(), None),
-            |(ct, media)| {
-                let schema = media.schema.as_ref().and_then(|s| {
-                    if let openapiv3::ReferenceOr::Item(schema) = s {
-                        Some(convert_schema("RequestBody", schema))
-                    } else {
-                        None
-                    }
-                });
-                (ct.clone(), schema)
-            },
-        );
+    let (content_type, schema) = body.content.iter().next().map_or_else(
+        || ("application/json".to_string(), None),
+        |(ct, media)| {
+            let schema = media.schema.as_ref().and_then(|s| {
+                if let openapiv3::ReferenceOr::Item(schema) = s {
+                    Some(convert_schema("RequestBody", schema))
+                } else {
+                    None
+                }
+            });
+            (ct.clone(), schema)
+        },
+    );
 
     RequestBody {
         content_type,
@@ -280,11 +283,7 @@ fn extract_schemas(spec: &openapiv3::OpenAPI) -> Vec<Schema> {
 
 fn convert_schema(name: &str, schema: &openapiv3::Schema) -> Schema {
     let type_name = schema_type_name(&schema.schema_kind);
-    let description = schema
-        .schema_data
-        .description
-        .clone()
-        .unwrap_or_default();
+    let description = schema.schema_data.description.clone().unwrap_or_default();
 
     let mut properties = Vec::new();
     let mut required_fields = Vec::new();
@@ -316,7 +315,11 @@ fn convert_schema(name: &str, schema: &openapiv3::Schema) -> Schema {
             }
         }
         openapiv3::SchemaKind::Type(openapiv3::Type::String(str_type)) => {
-            enum_values = str_type.enumeration.iter().filter_map(Clone::clone).collect();
+            enum_values = str_type
+                .enumeration
+                .iter()
+                .filter_map(Clone::clone)
+                .collect();
         }
         _ => {}
     }
@@ -457,7 +460,10 @@ mod tests {
         let spec = parser.parse(PETSTORE_OPENAPI3).unwrap();
         assert_eq!(spec.name, "Petstore");
         assert_eq!(spec.version, Some("1.0.0".to_string()));
-        assert_eq!(spec.base_url, Some("https://petstore.example.com/v1".to_string()));
+        assert_eq!(
+            spec.base_url,
+            Some("https://petstore.example.com/v1".to_string())
+        );
     }
 
     #[test]
@@ -466,7 +472,11 @@ mod tests {
         let spec = parser.parse(PETSTORE_OPENAPI3).unwrap();
         assert_eq!(spec.endpoints.len(), 3); // GET /pets, POST /pets, GET /pets/{petId}
 
-        let get_pets = spec.endpoints.iter().find(|e| e.path == "/pets" && e.method == HttpMethod::Get).unwrap();
+        let get_pets = spec
+            .endpoints
+            .iter()
+            .find(|e| e.path == "/pets" && e.method == HttpMethod::Get)
+            .unwrap();
         assert_eq!(get_pets.summary, "List all pets");
         assert_eq!(get_pets.parameters.len(), 1);
         assert_eq!(get_pets.parameters[0].name, "limit");
@@ -476,7 +486,10 @@ mod tests {
     fn parses_petstore_auth() {
         let parser = OpenApi3Parser;
         let spec = parser.parse(PETSTORE_OPENAPI3).unwrap();
-        assert!(spec.auth_methods.iter().any(|a| matches!(a, AuthMethod::Bearer)));
+        assert!(spec
+            .auth_methods
+            .iter()
+            .any(|a| matches!(a, AuthMethod::Bearer)));
     }
 
     #[test]

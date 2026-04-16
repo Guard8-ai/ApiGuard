@@ -8,15 +8,12 @@ use anyhow::Result;
 use regex::Regex;
 use std::sync::LazyLock;
 
-static RE_TYPE_DEF: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?:"""([^"]*?)"""\s*)?type\s+(\w+)\s*\{([^}]*)\}"#).unwrap()
-});
+static RE_TYPE_DEF: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?:"""([^"]*?)"""\s*)?type\s+(\w+)\s*\{([^}]*)\}"#).unwrap());
 static RE_FIELD: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?m)(?:"""([^"]*?)"""\s*)?^\s+(\w+)(?:\(([^)]*)\))?\s*:\s*([\w\[\]!]+)"#)
-        .unwrap()
+    Regex::new(r#"(?m)(?:"""([^"]*?)"""\s*)?^\s+(\w+)(?:\(([^)]*)\))?\s*:\s*([\w\[\]!]+)"#).unwrap()
 });
-static RE_ARG: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(\w+)\s*:\s*([\w\[\]!]+)").unwrap());
+static RE_ARG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\w+)\s*:\s*([\w\[\]!]+)").unwrap());
 
 pub struct GraphQlParser;
 

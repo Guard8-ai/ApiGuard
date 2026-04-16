@@ -1,5 +1,7 @@
 use crate::ir::{ApiSpec, AuthMethod, Endpoint, HttpMethod};
-use crate::security::{escape_markdown, escape_shell_example, safe_description, MAX_DESCRIPTION_LENGTH};
+use crate::security::{
+    escape_markdown, escape_shell_example, safe_description, MAX_DESCRIPTION_LENGTH,
+};
 use std::fmt::Write;
 
 /// Generate a markdown agentic AI guide from an `ApiSpec`.
@@ -24,7 +26,11 @@ fn write_header(out: &mut String, spec: &ApiSpec) -> std::fmt::Result {
     writeln!(out, "# {} for AI Agents", escape_markdown(&spec.name))?;
     writeln!(out)?;
     if !spec.description.is_empty() {
-        writeln!(out, "{}", safe_description(&spec.description, MAX_DESCRIPTION_LENGTH))?;
+        writeln!(
+            out,
+            "{}",
+            safe_description(&spec.description, MAX_DESCRIPTION_LENGTH)
+        )?;
         writeln!(out)?;
     }
     if let Some(ref base_url) = spec.base_url {
@@ -141,7 +147,11 @@ fn write_endpoint_details(out: &mut String, spec: &ApiSpec) -> std::fmt::Result 
         writeln!(out)?;
 
         if !ep.summary.is_empty() {
-            writeln!(out, "{}", safe_description(&ep.summary, MAX_DESCRIPTION_LENGTH))?;
+            writeln!(
+                out,
+                "{}",
+                safe_description(&ep.summary, MAX_DESCRIPTION_LENGTH)
+            )?;
             writeln!(out)?;
         }
 
@@ -238,11 +248,7 @@ fn write_curl_example(
             }
         }
         HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch => {
-            writeln!(
-                out,
-                "curl -X {} \"{}\" \\",
-                ep.method, url
-            )?;
+            writeln!(out, "curl -X {} \"{}\" \\", ep.method, url)?;
             writeln!(out, "  -H \"Content-Type: application/json\" \\")?;
             writeln!(out, "  -d '{{}}'")?;
         }
@@ -277,8 +283,12 @@ fn write_data_models(out: &mut String, spec: &ApiSpec) -> std::fmt::Result {
         }
 
         if !schema.enum_values.is_empty() {
-            let safe_values: Vec<String> = schema.enum_values.iter().map(|v| escape_markdown(v)).collect();
-        writeln!(out, "**Values**: {}", safe_values.join(", "))?;
+            let safe_values: Vec<String> = schema
+                .enum_values
+                .iter()
+                .map(|v| escape_markdown(v))
+                .collect();
+            writeln!(out, "**Values**: {}", safe_values.join(", "))?;
             writeln!(out)?;
         }
 

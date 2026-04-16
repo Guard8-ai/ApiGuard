@@ -15,11 +15,13 @@ static RE_SERVICE: LazyLock<Regex> =
 static RE_RPC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?://\s*(.+)\n\s*)?rpc\s+(\w+)\s*\(\s*(stream\s+)?(\w+)\s*\)\s*returns\s*\(\s*(stream\s+)?(\w+)\s*\)").unwrap()
 });
-static RE_MESSAGE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?://\s*(.+)\n\s*)?message\s+(\w+)\s*\{([^}]*)\}").unwrap()
-});
+static RE_MESSAGE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?://\s*(.+)\n\s*)?message\s+(\w+)\s*\{([^}]*)\}").unwrap());
 static RE_FIELD: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?://\s*(.+)\n\s*)?(repeated\s+|optional\s+|required\s+)?(\w+)\s+(\w+)\s*=\s*\d+\s*;").unwrap()
+    Regex::new(
+        r"(?://\s*(.+)\n\s*)?(repeated\s+|optional\s+|required\s+)?(\w+)\s+(\w+)\s*=\s*\d+\s*;",
+    )
+    .unwrap()
 });
 
 pub struct ProtoParser;
@@ -48,7 +50,12 @@ impl ApiParser for ProtoParser {
         for service in &services {
             api_name.clone_from(&service.name);
             for rpc in &service.rpcs {
-                let path = format!("/{}.{}/{}", package.as_deref().unwrap_or(""), service.name, rpc.name);
+                let path = format!(
+                    "/{}.{}/{}",
+                    package.as_deref().unwrap_or(""),
+                    service.name,
+                    rpc.name
+                );
 
                 let parameters = vec![Parameter {
                     name: rpc.input_type.clone(),
@@ -110,7 +117,10 @@ impl ApiParser for ProtoParser {
         Ok(ApiSpec {
             name: api_name,
             version: None,
-            description: format!("gRPC service (package: {})", package.as_deref().unwrap_or("unknown")),
+            description: format!(
+                "gRPC service (package: {})",
+                package.as_deref().unwrap_or("unknown")
+            ),
             base_url: None,
             spec_format: SpecFormat::GrpcProto,
             auth_methods: vec![AuthMethod::None],
@@ -289,7 +299,11 @@ service PetService {
     fn parses_streaming() {
         let parser = ProtoParser;
         let spec = parser.parse(SAMPLE_PROTO).unwrap();
-        let watch = spec.endpoints.iter().find(|e| e.path.contains("WatchPets")).unwrap();
+        let watch = spec
+            .endpoints
+            .iter()
+            .find(|e| e.path.contains("WatchPets"))
+            .unwrap();
         assert!(watch.summary.contains("server streaming"));
     }
 

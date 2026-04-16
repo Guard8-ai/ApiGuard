@@ -49,10 +49,15 @@ impl std::fmt::Display for ParameterLocation {
 /// Authentication method used by the API.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AuthMethod {
-    ApiKey { location: String, name: String },
+    ApiKey {
+        location: String,
+        name: String,
+    },
     Bearer,
     #[serde(rename = "OAuth2")]
-    OAuth2 { flows: Vec<String> },
+    OAuth2 {
+        flows: Vec<String>,
+    },
     Basic,
     None,
 }

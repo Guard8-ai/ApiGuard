@@ -10,7 +10,11 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "apiguard", version, about = "Auto-generate agentic AI guides from API specifications")]
+#[command(
+    name = "apiguard",
+    version,
+    about = "Auto-generate agentic AI guides from API specifications"
+)]
 struct Cli {
     /// Path to the API spec file (`OpenAPI`, Swagger, `GraphQL`, or Proto)
     spec_file: PathBuf,
@@ -40,7 +44,9 @@ fn parse_spec_format(name: &str) -> Result<SpecFormat> {
         "swagger2" | "swagger" => Ok(SpecFormat::Swagger2),
         "graphql" | "gql" => Ok(SpecFormat::GraphQl),
         "grpc" | "proto" | "protobuf" => Ok(SpecFormat::GrpcProto),
-        other => anyhow::bail!("Unknown spec format: {other}. Supported: openapi3, swagger2, graphql, grpc"),
+        other => anyhow::bail!(
+            "Unknown spec format: {other}. Supported: openapi3, swagger2, graphql, grpc"
+        ),
     }
 }
 
@@ -48,13 +54,11 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // Atomically load spec file (symlink check + size check + read in one operation)
-    let content = security::load_spec_safe(&cli.spec_file)
-        .context("Could not load spec file")?;
+    let content = security::load_spec_safe(&cli.spec_file).context("Could not load spec file")?;
 
     // Validate JSON depth if content looks like JSON
     if content.trim_start().starts_with('{') || content.trim_start().starts_with('[') {
-        security::validate_json_depth(&content)
-            .context("Spec file validation failed")?;
+        security::validate_json_depth(&content).context("Spec file validation failed")?;
     }
 
     let registry = ParserRegistry::new();
@@ -69,16 +73,15 @@ fn main() -> Result<()> {
 
     // Generate output
     let output = match cli.output_format {
-        OutputFormat::Json => serde_json::to_string_pretty(&spec)
-            .context("Failed to serialize to JSON")?,
-        OutputFormat::Md => generator::generate_guide(&spec)
-            .context("Failed to generate guide")?,
+        OutputFormat::Json => {
+            serde_json::to_string_pretty(&spec).context("Failed to serialize to JSON")?
+        }
+        OutputFormat::Md => generator::generate_guide(&spec).context("Failed to generate guide")?,
     };
 
     // Write output
     if let Some(ref path) = cli.output {
-        security::write_output_safe(path, &output)
-            .context("Failed to write output file")?;
+        security::write_output_safe(path, &output).context("Failed to write output file")?;
         eprintln!("Guide written to output file");
     } else {
         print!("{output}");
